@@ -33,13 +33,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-#url = "/content/dataset/dataset_local.xlsx"
-#url= "/content/drive/MyDrive/TCC2/dataset.xlsx"
-
-# Downloading the xlsx file from your GitHub account
+# Baixando o dataset do GitHub
 url= "https://github.com/rafaeld3castro/tcc2/raw/main/src/main/resources/dataset.xlsx"
 
-# Reading the downloaded content and turning it into a pandas dataframe
+# Lendo o datase e transformando em um dataframe do pandas
 dados = pd.read_excel(url)
 
 """## Padronizando o nome das colunas do dataset para facilitar a visualização dos dados
