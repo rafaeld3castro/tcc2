@@ -32,6 +32,7 @@ Nessa etapa, os dados já foram consolidados na planilha, filtrando os registros
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Baixando o dataset do GitHub
 url= "https://github.com/rafaeld3castro/tcc2/raw/main/src/main/resources/dataset.xlsx"
@@ -45,6 +46,7 @@ O nome dos rótulos originais estão sendo simplicados para facilitar a visuaç�
 
 **Temas propostos (dado booleano - 0 ou 1):**
 
+*   `t_estresse` = Estresse
 *   `t_conflitos_fam` = Conflitos Familiares
 *   `t_violencia` = Violência
 *   `t_conflitos` = Conflitos
@@ -100,6 +102,13 @@ dados = dados.rename(columns={
     "Qual:.1": "e_outras_qual",
     "Unnamed: 37": "depoimentos"
 })
+
+dados['e_fort_empod'] = dados['e_fort_empod'].fillna(0)
+dados.info()
+
+# Estratégia 'e_fort_empod' está com valores NaN, isso vai atrapalhar no somatório
+# Como o valor não está presente, será considerado como 0, ou seja, não ocorreu
+dados['e_fort_empod'] = dados['e_fort_empod'].replace(r'^\s*$', 0, regex=True)
 dados.info()
 
 """# Etapa 2: Processamento
@@ -111,7 +120,7 @@ dados.head()
 
 dados.describe()
 
-"""## Processamento dos dados de público da terapia
+"""## Processamento dos dados de Público da Terapia
 
 ### Processamento para sintizar o quantitativo de cada público
 """
@@ -187,6 +196,118 @@ for i, v in enumerate(totais):
 plt.xlabel('Categoria')
 plt.ylabel('Total')
 plt.title('Total de pessoas por categoria')
+
+# Exibir o gráfico
+plt.show()
+
+"""##Processamento dos dados de Temas Propostos
+
+###Processamento para sintizar o quantitativo de temas propostos
+
+Uma vez que o dados de tema proposto está 0 ou 1, para agrupar as ocorrências basta fazer o somatório de cada tema
+"""
+
+# Agrupando os totais de cada tema proposto
+total_estresse = dados['t_estresse'].sum()
+total_conflitos_fam = dados['t_conflitos_fam'].sum()
+total_violencia = dados['t_violencia'].sum()
+total_conflitos = dados['t_conflitos'].sum()
+total_problemas_esc = dados['t_problemas_esc'].sum()
+total_drogas = dados['t_drogas'].sum()
+total_alcoolismo = dados['t_alcoolismo'].sum()
+total_tabaco = dados['t_tabaco'].sum()
+total_depressao = dados['t_depressao'].sum()
+total_trabalho = dados['t_trabalho'].sum()
+total_aband_disc_rej = dados['t_aband_disc_rej'].sum()
+total_problemas_men = dados['t_problemas_men'].sum()
+total_prostituicao = dados['t_prostituicao'].sum()
+
+# Criando agrupando do total de todos os temas
+totais_temas = [
+    total_estresse, total_conflitos_fam, total_violencia, total_conflitos,
+    total_problemas_esc, total_drogas, total_alcoolismo, total_tabaco,
+    total_depressao, total_trabalho, total_aband_disc_rej, 
+    total_problemas_men, total_prostituicao
+]
+
+# Criando rótulo para cada tema
+labels_temas = [
+    'Estresse', 'Conflitos Familiares', 'Violência', 'Conflitos',
+    'Problemas Escolares', 'Drogas', 'Alcoolismo', 'Tabaco',
+    'Depressão', 'Trabalho', 'Abandono, Discriminação, Rejeição',
+    'Problemas Mentais e Neurológicos', 'Prostituição'
+]
+
+"""### Distribuição por Temas Propostos"""
+
+plt.rcdefaults()
+fig, ax = plt.subplots()
+
+# Distribuição por tema proposto
+y_pos = np.arange(len(labels_temas))
+error = np.random.rand(len(labels_temas))
+
+ax.barh(y_pos, totais_temas, xerr=error, align='center')
+ax.set_yticks(y_pos, labels=labels_temas)
+ax.invert_yaxis()  # labels read top-to-bottom
+ax.set_xlabel('Temas Propostos')
+ax.set_title('Total por temas propostos')
+
+# Exibir o gráfico
+plt.show()
+
+"""##Processamento dos dados de Estratégias de Enfrentamento
+
+###Processamento para sintizar o quantitativo de estratégias apresentadas nas terapias
+
+Uma vez que os dados das estratégias de enfrentamento está 0 ou 1, para agrupar as ocorrências basta fazer o somatório de cada estratégia
+"""
+
+# Agrupando os totais de cada estretégia proposta
+total_fort_empod = dados['e_fort_empod'].sum()
+total_ajuda_rel_esp = dados['e_ajuda_rel_esp'].sum()
+total_cuid_rel_fam = dados['e_cuid_rel_fam'].sum()
+total_busca_ajuda_pro = dados['e_busca_ajuda_pro'].sum()
+total_auto_cuidado = dados['e_auto_cuidado'].sum()
+total_participar_tc = dados['e_participar_tc'].sum()
+total_busca_redes_solid = dados['e_busca_redes_solid'].sum()
+
+# Criando agrupamento do total de todas as estratégias propostas
+totais_estrategias = [
+    total_fort_empod,
+    total_ajuda_rel_esp, 
+    total_cuid_rel_fam, 
+    total_busca_ajuda_pro,
+    total_auto_cuidado, 
+    total_participar_tc, 
+    total_busca_redes_solid
+]
+
+# Criando rótulo para cada estratégias propostas
+labels_estrategias = [
+    'Fortalecimento / empoderamento pessoal', 
+    'Buscar ajuda religiosa ou espiritual', 
+    'Cuidar e se relacionar melhor com a família', 
+    'Buscar ajuda profissional e ações de cidadania',
+    'Auto-cuidado - busca de recursos da cultura', 
+    'Participar de terapia comunitária', 
+    'Buscar redes solidárias'
+]
+
+"""### Distribuição por Estratégia de Enfrentamento"""
+
+plt.rcdefaults()
+fig, ax = plt.subplots()
+
+# Distribuição por estratégia proposta
+y_pos = np.arange(len(labels_estrategias))
+error = np.random.rand(len(labels_estrategias))
+
+ax.barh(y_pos, totais_estrategias, xerr=error, align='center')
+ax.set_yticks(y_pos, labels=labels_estrategias)
+ax.invert_yaxis()  # labels read top-to-bottom
+ax.set_xlabel('Estratégias de Enfretamento')
+ax.set_title('Total por estratégia proposta')
 
 # Exibir o gráfico
 plt.show()
