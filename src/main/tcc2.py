@@ -287,11 +287,14 @@ fig, ax = plt.subplots()
 y_pos = np.arange(len(labels_temas))
 error = np.random.rand(len(labels_temas))
 
-ax.barh(y_pos, totais_temas, xerr=error, align='center')
+barra_temas = ax.barh(y_pos, totais_temas, xerr=error, align='center')
+ax.bar_label(barra_temas, padding=5, color='black')
+
 ax.set_yticks(y_pos, labels=labels_temas)
 ax.invert_yaxis()  # labels read top-to-bottom
 ax.set_xlabel('Temas Propostos')
 ax.set_title('Total por temas propostos')
+ax.set_xlim(0, 9000)
 
 # Exibir o gráfico
 plt.show()
@@ -339,11 +342,14 @@ fig, ax = plt.subplots()
 y_pos = np.arange(len(labels_estrategias))
 error = np.random.rand(len(labels_estrategias))
 
-ax.barh(y_pos, totais_estrategias, xerr=error, align='center')
+barra_estrategias = ax.barh(y_pos, totais_estrategias, xerr=error, align='center')
+ax.bar_label(barra_estrategias, padding=5, color='black')
+
 ax.set_yticks(y_pos, labels=labels_estrategias)
 ax.invert_yaxis()  # labels read top-to-bottom
 ax.set_xlabel('Estratégias de Enfretamento')
 ax.set_title('Total por estratégia proposta')
+ax.set_xlim(0, 10000)
 
 # Exibir o gráfico
 plt.show()
@@ -470,8 +476,17 @@ temas_ordenados = dict(sorted(temas_dicionario.items(), key=lambda item: item[1]
 top_6_temas = list(temas_ordenados.keys())[:13]
 top_6_temas_total = list(temas_ordenados.values())[:13]
 
+visualizacao_frequencia_temas = pd.DataFrame(columns=['Tema', 'Total', 'Frequencia'])
+
+total_registros_final = dados_final['convenio'].count()
 for tema, total in zip(top_6_temas, top_6_temas_total):
-    print(f"{tema}, Total: {total}")
+    #print(f"{tema}, Total: {total}")
+    #print("{} => Total: {} ({:.2%})".format(tema, total, (total / total_registros_final)))
+    nova_visualizacao = pd.DataFrame([[tema, total, "{:.2%}".format(total / total_registros_final)]], columns=['Tema', 'Total', 'Frequencia'])
+    visualizacao_frequencia_temas = pd.concat([visualizacao_frequencia_temas, nova_visualizacao], ignore_index=True)
+    visualizacao_frequencia_temas.reset_index()
+
+visualizacao_frequencia_temas.style.set_table_attributes("style='display:inline'").set_caption("Frequência dos temas nos registros").hide_index()
 
 tema_target = dados_final.loc[:, [
     "t_estresse", "t_conflitos_fam", "t_trabalho", "t_depressao", "t_aband_disc_rej", "t_alcoolismo",
@@ -495,7 +510,7 @@ estrategia_target = dados_final.loc[:, [
     "e_auto_cuidado", "e_participar_tc","e_busca_redes_solid"
 ]]
 
-"""## Escolha do modelo
+"""## Escolha dos classificadores
 
 Aplicando o método de Validação Cruzada, usando K-Fold como validador, onde os dados de treinamento e teste serão escolhidos de acordo com a iteração do método, podemos ter uma pontuação baseada em diferentes configurações dos dados, onde os resultados das métricas adquiridas em cada confirguração será o score utilizado para escolher o modelo melhor rankeado.
 
@@ -518,10 +533,13 @@ import warnings
 warnings.warn = warn
 
 class Modelo:
-  def __init__(self, nome):
+  def __init__(self, nome, classificador):
     self.nome = nome
+    self.classificador = classificador
     self.temas = []
-    self.colunas = ['Target', 'Accuracy', 'Precision', 'F1', 'Kappa', 'ROC AUC']
+    self.pontuacao = 0
+    #self.colunas = ['Target', 'Accuracy', 'Precision', 'F1', 'Kappa', 'ROC AUC']
+    self.colunas = ['Target', 'Accuracy', 'Precision', 'ROC AUC']
     self.visualizacao = pd.DataFrame(columns=self.colunas)
 
   def adicionar_score(self, target_nome, score):
@@ -532,8 +550,8 @@ class Modelo:
         [[tema.nome,
           "{:.2%} (std: {:.2f})".format(tema.accuracy, tema.accuracy_std),
           "{:.2%} (std: {:.2f})".format(tema.precision, tema.precision_std),
-          "{:.2%} (std: {:.2f})".format(tema.f1, tema.f1_std),
-          "{:.12f} (std: {:.2f})".format(tema.kappa, tema.kappa_std),
+          #"{:.2%} (std: {:.2f})".format(tema.f1, tema.f1_std),
+          #"{:.12f} (std: {:.2f})".format(tema.kappa, tema.kappa_std),
           "{:.12f} (std: {:.2f})".format(tema.roc, tema.roc_std)
         ]],
         columns=self.colunas
@@ -542,7 +560,13 @@ class Modelo:
     self.visualizacao.reset_index()
 
   def mostrar_scores(self):
-    display(self.visualizacao.style.set_table_attributes("style='display:inline'").set_caption(self.nome))
+    display(self.visualizacao.style.set_table_attributes("style='display:inline'").set_caption(self.nome).hide_index())
+
+  def pontuar(self):
+    self.pontuacao = self.pontuacao + 1
+
+  def resetar_pontuacao(self):
+    self.pontuacao = 0
 
 
 class Target:
@@ -605,7 +629,7 @@ class MetricaScore:
     }
 
   def __calcular_scores__(self, atributos):
-    modelo = Modelo(self.nome_clf)
+    modelo = Modelo(self.nome_clf, self.clf)
     for tema_nome, tema_coluna in self.temas_map.items():
       x = atributos
       y = self.temas[tema_coluna]
@@ -623,11 +647,15 @@ class MetricaScore:
   def modelo(self):
     return self.modelos[0]
 
-def comparar_metricas(metrica_scores, index):
+def comparar_metricas(metrica_scores, index, resumir=False):
 
   tema = metrica_scores[0].modelo().temas[index].nome
 
-  metrics = ("Accuracy", "Precision", "F1", "Kappa", "ROC AUC")
+  if resumir:
+    metrics = ("Accuracy", "Precision", "ROC AUC")
+  else:
+    metrics = ("Accuracy", "Precision", "F1", "Kappa", "ROC AUC")
+
   scores = {}
 
   for score in metrica_scores:
@@ -638,7 +666,10 @@ def comparar_metricas(metrica_scores, index):
     f1 = target.f1
     kappa = target.kappa
     roc = target.roc
-    scores[modelo.nome] = (accuracy, precision, f1, kappa, roc)
+    if resumir:
+      scores[modelo.nome] = (accuracy, precision, roc)
+    else:
+      scores[modelo.nome] = (accuracy, precision, f1, kappa, roc)
 
   x = np.arange(len(metrics))  # the label locations
   width = 0.30  # the width of the bars
@@ -727,5 +758,128 @@ ada_boost.mostrar_scores()
 metricas = (gradient_boosting, random_forests, ada_boost)
 for index in range(13):
   comparar_metricas(metricas, index)
+
+"""### Gráficos comparativos por tema (resumo)"""
+
+metricas = (gradient_boosting, random_forests, ada_boost)
+for index in range(13):
+  comparar_metricas(metricas, index, resumir=True)
+
+"""## Modelo final"""
+
+def calcular_pontuacao(metrica_scores):
+
+  pontuacao_map = {}
+  modelo_final = None
+
+  for score in metrica_scores:
+    modelo = score.modelo()
+    modelo.resetar_pontuacao()
+    pontuacao_map[modelo.nome] = modelo
+
+  for i in range(13):
+    max_accuracy = 0;
+    max_precision = 0;
+    max_roc = 0;
+
+    for nome_modelo, modelo in pontuacao_map.items():
+      if modelo.temas[i].accuracy > max_accuracy:
+        max_accuracy = modelo.temas[i].accuracy
+
+      if modelo.temas[i].precision > max_precision:
+        max_precision = modelo.temas[i].precision
+
+      if modelo.temas[i].roc > max_roc:
+        max_roc = modelo.temas[i].roc
+
+    for nome_modelo, modelo in pontuacao_map.items():
+      if modelo.temas[i].accuracy == max_accuracy:
+        modelo.pontuar()
+
+      if modelo.temas[i].precision == max_precision:
+        modelo.pontuar()
+
+      if modelo.temas[i].roc == max_roc:
+        modelo.pontuar()
+
+  maior_pontuacao_geral = 0
+
+  for nome_modelo, modelo in pontuacao_map.items():
+
+    if modelo.pontuacao > maior_pontuacao_geral:
+      maior_pontuacao_geral = modelo.pontuacao
+
+    print(f"{nome_modelo}: {modelo.pontuacao} pontos")
+
+  for nome_modelo, modelo in pontuacao_map.items():
+
+    if modelo.pontuacao == maior_pontuacao_geral:
+      modelo_final = modelo
+
+  return modelo_final
+
+metricas = (gradient_boosting, random_forests, ada_boost)
+
+modelo_final = calcular_pontuacao(metricas)
+
+print(f"\nModelo {modelo_final.nome} teve a maior pontuação ({modelo_final.pontuacao} pontos)")
+
+from sklearn.model_selection import train_test_split
+import copy
+
+class ModeloTemaTerapia:
+
+  def __init__(self, modelo_final, dados_final):
+    self.modelo = modelo_final
+    self.dados = dados_final
+    self.publico = self.dados.loc[:, ["criancas", "adolescentes", "adultos", "idosos"]]
+    self.temas = self.dados.loc[:, [
+        "t_estresse", "t_conflitos_fam", "t_trabalho", "t_depressao", "t_aband_disc_rej", "t_alcoolismo",
+        "t_violencia", "t_conflitos", "t_problemas_esc", "t_drogas", "t_tabaco", "t_problemas_men", "t_prostituicao"
+    ]]
+
+    self.temas_map = {
+        'Estresse': 't_estresse',
+        'Conflitos Familiares': 't_conflitos_fam',
+        'Trabalho': 't_trabalho',
+        'Depressão': 't_depressao',
+        'Abandono, Discriminação, Rejeição': 't_aband_disc_rej',
+        'Alcoolismo': 't_alcoolismo',
+        'Violência': 't_violencia',
+        'Conflitos': 't_conflitos',
+        'Drogas': 't_drogas',
+        'Tabaco': 't_tabaco',
+        'Problemas Escolares': 't_problemas_esc',
+        'Problemas Mentais e Neurológicos': 't_problemas_men',
+        'Prostituição': 't_prostituicao'
+    }
+
+  def treinar(self):
+    self.classificador_map = {}
+
+    for tema_nome, tema_coluna in self.temas_map.items():
+      X_train, X_test, y_train, y_test = train_test_split(self.publico, self.temas[tema_coluna], test_size=0.3, random_state=0)
+
+      self.classificador_map[tema_coluna] = copy.deepcopy(self.modelo.classificador)
+      self.classificador_map[tema_coluna].fit(self.publico, self.temas[tema_coluna])
+
+  def prever(self, criancas, adolescentes, adultos, idosos):
+
+    publico = [[criancas, adolescentes, adultos, idosos]]
+    temas_provaveis = []
+
+    for tema_nome, tema_coluna in self.temas_map.items():
+      pode_ter_tema = self.classificador_map[tema_coluna].predict(publico)
+
+      if (pode_ter_tema == 1):
+        temas_provaveis.append(tema_nome)
+
+    return temas_provaveis
+
+modelo_temas_terapia = ModeloTemaTerapia(modelo_final, dados_final)
+
+modelo_temas_terapia.treinar()
+
+modelo_temas_terapia.prever(0, 30, 100, 50)
 
 """# Fase 5: Avaliação"""
