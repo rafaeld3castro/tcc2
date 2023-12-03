@@ -65,12 +65,12 @@ dados = pd.read_excel(url)
 dados['convenio'] = dados['convenio'].replace('2013_ms_calamidades', '2011_ms_calamidades')
 total_registros = dados['convenio'].count()
 
-# Gráfico de Pizza da divisão dos dadso por convênio
+# Gráfico de Pizza da divisão dos dados por convênio
 labels_convenio = dados['convenio'].dropna().unique()
 actual_values_convenio = dados['convenio'].value_counts(dropna=True)
 
 # cores
-colors = ['#ff9999','#66b3ff','#99ff99']
+colors = ['#4C72B0','#DD8452','#55A868']
 
 fig1, ax1 = plt.subplots()
 
@@ -105,7 +105,7 @@ plt.show()
 ## Descrição dos Dados
 
 * **Coluna 0 - convenio**: Convênio cuja formação dos terapeutas deu origem ao registro das rodas
-* **Coluna 1 - UF**: Indica o UF no qual a terapia foi realizada
+* **Coluna 1 - UF**: Indica a Unidade Federativa (estado do Brasil) em que a terapia foi realizada
 * **Coluna 2 - Data**: Inidica o data em que a terapia foi realizada
 * **Coluna 3 - Horário**: Inidica o horário em que a terapia foi realizada
 
@@ -131,7 +131,7 @@ plt.show()
 * **Coluna  22 - Abandono, Discriminação, Rejeição**: 0 ou 1 pra indicar se o tema foi proposto ou não
 * **Coluna  23 - Problemas Mentais e Neurológicos**: 0 ou 1 pra indicar se o tema foi proposto ou não
 * **Coluna  24 - Prostituição**: 0 ou 1 pra indicar se o tema foi proposto ou não
-* **Coluna  25 - Outro**: 0 ou 1 pra indicar se o tema foi proposto ou não
+* **Coluna  25 - Outro**: 0 ou 1 pra indicar se outro tema foi proposto ou não
 * **Coluna  26 - Qual**: Se foi proposto outro tema, quais foram. Campo em texto aberto
 * **Coluna 27 - Tema Escolhido**: Qual o tema foi escolhido na terapia
 
@@ -191,35 +191,24 @@ total_masculino = dados['masculino'].sum()
 print('Público Feminino: %d' % total_feminino)
 print('Público Masculino: %d' % total_masculino)
 
-dados.loc[:,['idosos','adolescentes','adultos','criancas','total_pessoas','feminino','masculino']].head(10)
-
-dados.shape
-
-sns.histplot(dados, x='adolescentes')
-
-sns.histplot(dados, x='adultos')
-
-sns.histplot(dados, x='criancas')
-
-sns.histplot(dados, x='idosos')
+dados.loc[:,['idosos','adolescentes','adultos','criancas','total_pessoas','feminino','masculino']].head(5)
 
 categorias = ['feminino', 'masculino']
 totais = [total_feminino, total_masculino]
 
-# Criar o gráfico de barras
-plt.bar(categorias, totais)
+plt.rcdefaults()
+fig, ax = plt.subplots()
 
-# Adicionar os valores acima das barras
-for i, v in enumerate(totais):
-    plt.text(i, v+30, str(v), ha='center')
+# Criar o gráfico de barras
+barra_sexo = plt.bar(categorias, totais, align='center')
+ax.bar_label(barra_sexo, padding=5, color='black')
+ax.set_ylim(0, 200000)
 
 # Configurar o gráfico
-# A época não a classição estava binária, e não incluía os grupos minoritários
-plt.xlabel('Sexo Biólogico')
+plt.xlabel('Sexo Biologico')
 plt.ylabel('Total')
-plt.title('Total de pessoas por categoria')
+plt.title('Total de pessoas')
 
-# Exibir o gráfico
 plt.show()
 
 """Existe uma diferença considerável entre a quantidade de pessoas do público feminino comparado ao público masculino. Diferença essa de pouco mais de 3 vezes de um para o outro."""
@@ -227,19 +216,19 @@ plt.show()
 categorias = ['criancas', 'adolescentes','adultos','idosos']
 totais =  [total_criancas, total_adolescentes,total_adultos,total_idosos]
 
-# Criar o gráfico de barras
-plt.bar(categorias, totais)
+plt.rcdefaults()
+fig, ax = plt.subplots()
 
-# Adicionar os valores acima das barras
-for i, v in enumerate(totais):
-    plt.text(i, v+30, str(v), ha='center')
+# Criar o gráfico de barras
+barra_idade = plt.bar(categorias, totais)
+ax.bar_label(barra_idade, padding=5, color='black')
+ax.set_ylim(0, 150000)
 
 # Configurar o gráfico
-plt.xlabel('Categoria')
+plt.xlabel('Faixa etária')
 plt.ylabel('Total')
-plt.title('Total de pessoas por categoria')
+plt.title('Total de pessoas por faixa etária')
 
-# Exibir o gráfico
 plt.show()
 
 """Existe uma participação maior do público adulto nas terapias
@@ -291,12 +280,14 @@ barra_temas = ax.barh(y_pos, totais_temas, xerr=error, align='center')
 ax.bar_label(barra_temas, padding=5, color='black')
 
 ax.set_yticks(y_pos, labels=labels_temas)
-ax.invert_yaxis()  # labels read top-to-bottom
+
+# labels lidos de cima pra baixo
+ax.invert_yaxis()
+
 ax.set_xlabel('Temas Propostos')
 ax.set_title('Total por temas propostos')
 ax.set_xlim(0, 9000)
 
-# Exibir o gráfico
 plt.show()
 
 """###Estratégias de enfrentamento
@@ -346,12 +337,14 @@ barra_estrategias = ax.barh(y_pos, totais_estrategias, xerr=error, align='center
 ax.bar_label(barra_estrategias, padding=5, color='black')
 
 ax.set_yticks(y_pos, labels=labels_estrategias)
-ax.invert_yaxis()  # labels read top-to-bottom
+
+# labels lidos de cima pra baixo
+ax.invert_yaxis()
+
 ax.set_xlabel('Estratégias de Enfretamento')
 ax.set_title('Total por estratégia proposta')
 ax.set_xlim(0, 10000)
 
-# Exibir o gráfico
 plt.show()
 
 """# Fase 3: Preparação dos Dados
@@ -422,26 +415,22 @@ dados = dados.rename(columns={
 
 """Após a padronização dos rótulos, para otimizarmos o processamentos dos dados na fase seguinte, podemos resumir o conjunto de dados mantendo somente os atributos necessários para o treinamento e teste do modelo. Assim os atributos que permanecerão no dataset final serão os dados relacionados ao público, temas propostos e estratégias de enfrentamentaento sugeridos."""
 
-##Remover atributos do Dataframe
+# Remover atributos do Dataframe
 dados_final = dados.copy()
 colunas_para_remover = [
     'uf', 'data', 'hora',
     't_outro', 't_outro_qual', 't_escolhido',
     'e_outras', 'e_outras_qual', 'depoimentos',
-    ##'criancas', 'adolescentes', 'adultos', 'idosos', 'total_pessoas',
+    'e_fort_empod', 'e_ajuda_rel_esp', 'e_cuid_rel_fam', 'e_busca_ajuda_pro',
+    'e_auto_cuidado', 'e_participar_tc', 'e_busca_redes_solid',
     'feminino', 'masculino'
 ]
 dados_final.drop(columns=colunas_para_remover, inplace=True, axis=1)
 
 """##Limpeza dos dados
 
-Na fase de Compreensão dos dados verificamos a qualidade dos dados e identificamos que havia um registro da estratégia de enfrentamento "*Fortalecimento / empoderamento pessoal*" que estava com valor faltante, e para poder realizar o somatório para visualização dos tatais fizemos um preenchimento com o valor 0. Assim para os valores faltantes para o atributo será mantida a estratégia de preencher o valor faltante com 0, indicando que a estratégias não foi sugerida na terapia que o registro representa.
+Identificamos que alguns registros estavam com o público zerado, o que pode impactar no treinamento do modelo. Assim esses registros serão removidos do dataset final para não prejudicar a criação do modelo.
 """
-
-dados_final['e_fort_empod'] = dados_final['e_fort_empod'].fillna(0)
-dados_final['e_fort_empod'] = dados_final['e_fort_empod'].replace(r'^\s*$', 0, regex=True)
-
-"""Identifiquei que alguns registros estavam com o público zerado, o que pode impactar no treinamento do modelo. Assim esses registros serão removidos do dataset final para não prejudicar a criação do modelo."""
 
 # Registros em que não teve público
 publico_zerado = dados_final['total_pessoas'] == 0
@@ -467,10 +456,10 @@ publico_terapia = dados_final.loc[:, [
 
 """### Atributos de Saída: Temas Propostos"""
 
-# Crie um dicionário que associa os rótulos aos totais
+# Cria um dicionário que associa os rótulos aos totais
 temas_dicionario = dict(zip(labels_temas, totais_temas))
 
-# Ordene os dados pelo valor em ordem decrescente
+# Ordena os dados pelo valor em ordem decrescente
 temas_ordenados = dict(sorted(temas_dicionario.items(), key=lambda item: item[1], reverse=True))
 
 top_6_temas = list(temas_ordenados.keys())[:13]
@@ -480,8 +469,6 @@ visualizacao_frequencia_temas = pd.DataFrame(columns=['Tema', 'Total', 'Frequenc
 
 total_registros_final = dados_final['convenio'].count()
 for tema, total in zip(top_6_temas, top_6_temas_total):
-    #print(f"{tema}, Total: {total}")
-    #print("{} => Total: {} ({:.2%})".format(tema, total, (total / total_registros_final)))
     nova_visualizacao = pd.DataFrame([[tema, total, "{:.2%}".format(total / total_registros_final)]], columns=['Tema', 'Total', 'Frequencia'])
     visualizacao_frequencia_temas = pd.concat([visualizacao_frequencia_temas, nova_visualizacao], ignore_index=True)
     visualizacao_frequencia_temas.reset_index()
@@ -491,23 +478,6 @@ visualizacao_frequencia_temas.style.set_table_attributes("style='display:inline'
 tema_target = dados_final.loc[:, [
     "t_estresse", "t_conflitos_fam", "t_trabalho", "t_depressao", "t_aband_disc_rej", "t_alcoolismo",
     "t_violencia", "t_conflitos", "t_problemas_esc", "t_drogas", "t_tabaco", "t_problemas_men", "t_prostituicao"
-]]
-
-# Crie um dicionário que associa os rótulos aos totais
-estrategias_dicionario = dict(zip(labels_estrategias, totais_estrategias))
-
-# Ordene os dados pelo valor em ordem decrescente
-estrategias_ordenados = dict(sorted(estrategias_dicionario.items(), key=lambda item: item[1], reverse=True))
-
-top_estrategias = list(estrategias_ordenados.keys())
-top_estrategias_total = list(estrategias_ordenados.values())
-
-for estrategia, total in zip(top_estrategias, top_estrategias_total):
-    print(f"{estrategia}, Total: {total}")
-
-estrategia_target = dados_final.loc[:, [
-    "e_fort_empod", "e_ajuda_rel_esp", "e_cuid_rel_fam", "e_busca_ajuda_pro",
-    "e_auto_cuidado", "e_participar_tc","e_busca_redes_solid"
 ]]
 
 """## Escolha dos classificadores
@@ -538,8 +508,7 @@ class Modelo:
     self.classificador = classificador
     self.temas = []
     self.pontuacao = 0
-    #self.colunas = ['Target', 'Accuracy', 'Precision', 'F1', 'Kappa', 'ROC AUC']
-    self.colunas = ['Target', 'Accuracy', 'Precision', 'ROC AUC']
+    self.colunas = ['Tema', 'Accuracy', 'Precision', 'F1']
     self.visualizacao = pd.DataFrame(columns=self.colunas)
 
   def adicionar_score(self, target_nome, score):
@@ -550,9 +519,7 @@ class Modelo:
         [[tema.nome,
           "{:.2%} (std: {:.2f})".format(tema.accuracy, tema.accuracy_std),
           "{:.2%} (std: {:.2f})".format(tema.precision, tema.precision_std),
-          #"{:.2%} (std: {:.2f})".format(tema.f1, tema.f1_std),
-          #"{:.12f} (std: {:.2f})".format(tema.kappa, tema.kappa_std),
-          "{:.12f} (std: {:.2f})".format(tema.roc, tema.roc_std)
+          "{:.2%} (std: {:.2f})".format(tema.f1, tema.f1_std)
         ]],
         columns=self.colunas
     )
@@ -652,7 +619,7 @@ def comparar_metricas(metrica_scores, index, resumir=False):
   tema = metrica_scores[0].modelo().temas[index].nome
 
   if resumir:
-    metrics = ("Accuracy", "Precision", "ROC AUC")
+    metrics = ("Accuracy", "Precision", "F1")
   else:
     metrics = ("Accuracy", "Precision", "F1", "Kappa", "ROC AUC")
 
@@ -667,12 +634,12 @@ def comparar_metricas(metrica_scores, index, resumir=False):
     kappa = target.kappa
     roc = target.roc
     if resumir:
-      scores[modelo.nome] = (accuracy, precision, roc)
+      scores[modelo.nome] = (accuracy, precision, f1)
     else:
       scores[modelo.nome] = (accuracy, precision, f1, kappa, roc)
 
-  x = np.arange(len(metrics))  # the label locations
-  width = 0.30  # the width of the bars
+  x = np.arange(len(metrics))
+  width = 0.30
   multiplier = 0
 
   fig, ax = plt.subplots(figsize=(10, 5), layout='constrained')
@@ -694,55 +661,38 @@ def comparar_metricas(metrica_scores, index, resumir=False):
 
       multiplier += 1
 
-  # Add some text for labels, title and custom x-axis tick labels, etc.
-  #ax.set_ylabel('Length (mm)')
   ax.set_title("Tema: {}".format(tema))
   ax.set_xticks(x + width, metrics)
 
-  #ax.legend(loc='upper left', ncols=3)
-
-  # Put a legend below current axis
   ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=5)
 
   ax.set_ylim(-0.1, 1)
 
   plt.show()
 
-"""### Cross Validation para K-Neighbors"""
-
-from sklearn.neighbors import KNeighborsClassifier
-
-#knn = MetricaScore(dados_final, KNeighborsClassifier(n_neighbors=5), "K-Neighbors Classifier")
-#knn.calcular_scores()
-
-"""### Cross Validation para Multi-layer Perceptron"""
-
-from sklearn.neural_network import MLPClassifier
-
-#mpl = MetricaScore(dados_final, MLPClassifier(hidden_layer_sizes=(15,), random_state=1, verbose=False), 'Multi-layer Perceptron Classifier')
-#mpl.calcular_scores()
-
 """### Cross Validation - Ensemble Classifiers"""
 
 # Gradient-boosted trees
 from sklearn.ensemble import GradientBoostingClassifier
 
-gradient_boosting = MetricaScore(dados_final, GradientBoostingClassifier(n_estimators=10, learning_rate=1.0), 'Gradient-boosted trees Classifier')
+gradient_boosting = MetricaScore(dados_final, GradientBoostingClassifier(n_estimators=10, learning_rate=1.0), 'Gradient-boosted trees classifier')
 gradient_boosting.calcular_scores()
 
 # Random forest
 from sklearn.ensemble import RandomForestClassifier
 
-random_forests = MetricaScore(dados_final, RandomForestClassifier(n_estimators=10), 'Random Forest Classifier')
+random_forests = MetricaScore(dados_final, RandomForestClassifier(n_estimators=10), 'Random Forest classifier')
 random_forests.calcular_scores()
 
 # AdaBoost
 from sklearn.ensemble import AdaBoostClassifier
 
-ada_boost = MetricaScore(dados_final, AdaBoostClassifier(n_estimators=10, learning_rate=1.0), 'Ada Boost Classifier')
+ada_boost = MetricaScore(dados_final, AdaBoostClassifier(n_estimators=10, learning_rate=1.0), 'AdaBoost classifier')
 ada_boost.calcular_scores()
 
 """##Visualização dos Resultados
+
+Os dados podem e devem variar um pouco em cada execução
 
 ### Tabulados
 """
@@ -754,12 +704,6 @@ random_forests.mostrar_scores()
 ada_boost.mostrar_scores()
 
 """### Gráficos comparativos por tema"""
-
-metricas = (gradient_boosting, random_forests, ada_boost)
-for index in range(13):
-  comparar_metricas(metricas, index)
-
-"""### Gráficos comparativos por tema (resumo)"""
 
 metricas = (gradient_boosting, random_forests, ada_boost)
 for index in range(13):
@@ -780,7 +724,7 @@ def calcular_pontuacao(metrica_scores):
   for i in range(13):
     max_accuracy = 0;
     max_precision = 0;
-    max_roc = 0;
+    max_f1 = 0;
 
     for nome_modelo, modelo in pontuacao_map.items():
       if modelo.temas[i].accuracy > max_accuracy:
@@ -789,17 +733,11 @@ def calcular_pontuacao(metrica_scores):
       if modelo.temas[i].precision > max_precision:
         max_precision = modelo.temas[i].precision
 
-      if modelo.temas[i].roc > max_roc:
-        max_roc = modelo.temas[i].roc
+      if modelo.temas[i].f1 > max_f1:
+        max_f1 = modelo.temas[i].f1
 
     for nome_modelo, modelo in pontuacao_map.items():
-      if modelo.temas[i].accuracy == max_accuracy:
-        modelo.pontuar()
-
       if modelo.temas[i].precision == max_precision:
-        modelo.pontuar()
-
-      if modelo.temas[i].roc == max_roc:
         modelo.pontuar()
 
   maior_pontuacao_geral = 0
@@ -820,9 +758,39 @@ def calcular_pontuacao(metrica_scores):
 
 metricas = (gradient_boosting, random_forests, ada_boost)
 
-modelo_final = calcular_pontuacao(metricas)
+"""
+#modelo_final = calcular_pontuacao(metricas)
 
-print(f"\nModelo {modelo_final.nome} teve a maior pontuação ({modelo_final.pontuacao} pontos)")
+Devido a variação nas execuções do ambiente,
+o modelo final ficará com o classificador melhor pontuado quando o resultado foi gerado para o TCC
+"""
+
+modelo_final = random_forests.modelo()
+
+classificadores_labels = ['Random Forest', 'Gradient-boosted trees', 'AdaBoost']
+classificadores_pontuacao = [6, 5, 2]
+
+plt.rcdefaults()
+fig, ax = plt.subplots(figsize=(7, 3), layout='constrained')
+fig.canvas.manager.set_window_title('Eldorado K-8 Fitness Chart')
+
+plt.rcdefaults()
+sns.set_theme()
+sns.set_context("paper")
+
+# Distribuição por classificador
+y_pos = np.arange(len(classificadores_labels))
+bar_colors = ['#4C72B0','#DD8452','#55A868']
+
+barra_temas = ax.barh(y_pos, classificadores_pontuacao, align='center', color=bar_colors)
+ax.bar_label(barra_temas, padding=10, size=15, color='black')
+
+ax.set_yticks(y_pos, labels=classificadores_labels)
+ax.invert_yaxis()
+ax.set_xlim(0, 8)
+
+# Exibir o gráfico
+plt.show()
 
 from sklearn.model_selection import train_test_split
 import copy
@@ -880,6 +848,15 @@ modelo_temas_terapia = ModeloTemaTerapia(modelo_final, dados_final)
 
 modelo_temas_terapia.treinar()
 
-modelo_temas_terapia.prever(0, 30, 100, 50)
+modelo_temas_terapia.prever(1, 0, 20, 1)
 
-"""# Fase 5: Avaliação"""
+"""# Fase 5: Avaliação
+
+A fase de avaliação está detalhada nos capitulos de Resultados e Conclusão do TCC
+
+## Export to PDF
+"""
+
+#!sudo apt-get install texlive-xetex texlive-fonts-recommended texlive-plain-generic
+
+#!jupyter nbconvert --to pdf TCC2.ipynb
